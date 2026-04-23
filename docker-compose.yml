@@ -1,0 +1,10 @@
+services:
+  tests:
+    build: .
+    volumes:
+      - .:/package
+      - /package/vendor
+    working_dir: /package
+    command: >
+      sh -c "composer install --no-interaction --no-progress
+      && vendor/bin/phpunit --colors=always"

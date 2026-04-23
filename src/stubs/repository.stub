@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Repositories;
+
+use App\Models\{{model}};{{repository_interface_use}}
+
+class {{model}}Repository{{implements}}
+{
+    public function query()
+    {
+        return {{model}}::query();
+    }
+
+    public function paginate()
+    {
+        return $this->query()->paginate();
+    }
+
+    public function create(array $data): {{model}}
+    {
+        return {{model}}::create($data);
+    }
+
+    public function update({{model}} $model, array $data): {{model}}
+    {
+        $model->update($data);
+
+        return $model;
+    }
+
+    public function delete({{model}} $model): void
+    {
+        $model->delete();
+    }
+{{soft_deletes}}}

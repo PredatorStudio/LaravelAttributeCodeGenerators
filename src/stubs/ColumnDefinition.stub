@@ -1,0 +1,26 @@
+public static function fields(): array
+    {
+        return [
+            [
+                'name' => 'id',
+                'type' => 'id',
+            ],
+            [
+                'name' => 'title',
+                'type' => 'string',
+                'attributes' => ['required'],
+                'unique' => true,
+            ],
+            [
+                'name' => 'content',
+                'type' => 'text',
+                'nullable' => true,
+            ],
+            [
+                'name' => 'user_id',
+                'type' => 'foreignId',
+                'references' => 'users.id',
+                'onDelete' => 'cascade',
+            ],
+        ];
+    }

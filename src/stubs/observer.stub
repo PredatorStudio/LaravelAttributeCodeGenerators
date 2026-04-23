@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Observers;
+
+use App\Models\{{model}};
+
+class {{model}}Observer
+{
+    public function creating({{model}} ${{var}}): void {}
+
+    public function created({{model}} ${{var}}): void {}
+
+    public function updating({{model}} ${{var}}): void {}
+
+    public function updated({{model}} ${{var}}): void {}
+
+    public function deleting({{model}} ${{var}}): void {}
+
+    public function deleted({{model}} ${{var}}): void {}
+}

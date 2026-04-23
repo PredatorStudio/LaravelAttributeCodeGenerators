@@ -1,0 +1,2 @@
+Route::apiResource('{{route}}', \App\Http\Controllers\{{model}}Controller::class)
+    ->only({{methods}});

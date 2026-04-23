@@ -1,0 +1,15 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\{{model}};
+use {{repository_fqn}};{{service_interface_use}}
+
+class {{model}}Service{{implements}}
+{
+    public function __construct(
+        private {{repository_type}} $repository
+    ) {}
+
+{{methods}}
+}

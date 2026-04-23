@@ -1,0 +1,53 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\{{model}};
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class {{model}}Test extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_can_list_{{var}}s(): void
+    {
+        $response = $this->getJson('/api/{{route}}');
+
+        $response->assertOk();
+    }
+
+    public function test_can_create_{{var}}(): void
+    {
+        $response = $this->postJson('/api/{{route}}', []);
+
+        $response->assertCreated();
+    }
+
+    public function test_can_show_{{var}}(): void
+    {
+        ${{var}} = {{model}}::factory()->create();
+
+        $response = $this->getJson("/api/{{route}}/{${{var}}->id}");
+
+        $response->assertOk();
+    }
+
+    public function test_can_update_{{var}}(): void
+    {
+        ${{var}} = {{model}}::factory()->create();
+
+        $response = $this->putJson("/api/{{route}}/{${{var}}->id}", []);
+
+        $response->assertOk();
+    }
+
+    public function test_can_delete_{{var}}(): void
+    {
+        ${{var}} = {{model}}::factory()->create();
+
+        $response = $this->deleteJson("/api/{{route}}/{${{var}}->id}");
+
+        $response->assertNoContent();
+    }
+}
