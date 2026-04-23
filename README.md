@@ -1,11 +1,13 @@
 # Laravel Attribute Code Generators
 
-A Laravel package that generates a full CRUD scaffold from PHP 8.1 Attributes placed directly on Eloquent models. One command reads every model in your app, inspects its attributes, and writes controllers, services, repositories, DTOs, resources, migrations, policies, observers, factories, tests, and routes — only what you asked for, nothing more.
+**v1.0**
+
+A Laravel package that generates a full CRUD scaffold from PHP 8.2 Attributes placed directly on Eloquent models. One command reads every model in your app, inspects its attributes, and writes controllers, services, repositories, DTOs, resources, migrations, policies, observers, factories, tests, and routes — only what you asked for, nothing more.
 
 ## Requirements
 
-- PHP 8.1+
-- Laravel 10 or 11
+- PHP 8.2+
+- Laravel 11, 12, or 13
 
 ## Installation
 
