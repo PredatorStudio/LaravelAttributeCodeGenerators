@@ -3,6 +3,7 @@
 namespace Vendor\LaravelAttributeCodeGenerators\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Vendor\LaravelAttributeCodeGenerators\Console\Commands\CrudInstallCommand;
 use Vendor\LaravelAttributeCodeGenerators\Console\Commands\CrudSyncCommand;
 use Vendor\LaravelAttributeCodeGenerators\Generators\CrudLogger;
 use Vendor\LaravelAttributeCodeGenerators\Generators\FileWriter;
@@ -23,6 +24,7 @@ class LaravelAttributeCodeGeneratorsProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 CrudSyncCommand::class,
+                CrudInstallCommand::class,
             ]);
         }
     }

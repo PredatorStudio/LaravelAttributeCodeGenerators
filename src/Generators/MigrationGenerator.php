@@ -8,7 +8,7 @@ use ReflectionClass;
 
 class MigrationGenerator
 {
-    public function generate(string $modelClass): void
+    public function generate(string $modelClass, bool $softDeletes = false): void
     {
         $model = new $modelClass;
 
@@ -20,7 +20,7 @@ class MigrationGenerator
 
         $schema = $this->buildSchema($model->fields());
 
-        $migration = $this->wrapMigration($tableName, $schema);
+        $migration = $this->wrapMigration($tableName, $schema, $softDeletes);
 
         $fileName = date('Y_m_d_His') . "_create_{$tableName}_table.php";
 
@@ -116,7 +116,20 @@ class MigrationGenerator
         return $line . ";\n";
     }
 
-    private function wrapMigration(string $table, string $schema): string
+    public function generateAlter(string $modelClass, array $newFields): void
+    {
+        $tableName = Str::snake(Str::pluralStudly(class_basename($modelClass)));
+
+        $schema = $this->buildSchema($newFields);
+
+        $migration = $this->wrapAlterMigration($tableName, $schema);
+
+        $fileName = date('Y_m_d_His') . "_add_columns_to_{$tableName}_table.php";
+
+        File::put(database_path("migrations/{$fileName}"), $migration);
+    }
+
+    private function wrapAlterMigration(string $table, string $schema): string
     {
         return <<<PHP
 <?php
@@ -129,8 +142,39 @@ return new class extends Migration {
 
     public function up(): void
     {
+        Schema::table('$table', function (Blueprint \$table) {
+{$schema}        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('$table', function (Blueprint \$table) {
+            // TODO: drop added columns
+        });
+    }
+};
+PHP;
+    }
+
+    private function wrapMigration(string $table, string $schema, bool $softDeletes = false): string
+    {
+        $extra = $softDeletes
+            ? "            \$table->timestamps();\n            \$table->softDeletes();"
+            : "            \$table->timestamps();";
+
+        return <<<PHP
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+
+    public function up(): void
+    {
         Schema::create('$table', function (Blueprint \$table) {
-{$schema}            \$table->timestamps();
+{$schema}{$extra}
         });
     }
 

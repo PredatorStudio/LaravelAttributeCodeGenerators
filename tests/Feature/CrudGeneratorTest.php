@@ -194,6 +194,20 @@ class CrudGeneratorTest extends TestCase
         $this->assertStringContainsString("'nullable'", $content);
     }
 
+    public function test_update_request_uses_sometimes_for_partial_update(): void
+    {
+        $content = $this->fileWriter->get('Http/Requests/UserUpdateRequest.php');
+
+        $this->assertStringContainsString("'sometimes'", $content);
+    }
+
+    public function test_store_request_does_not_use_sometimes(): void
+    {
+        $content = $this->fileWriter->get('Http/Requests/UserStoreRequest.php');
+
+        $this->assertStringNotContainsString("'sometimes'", $content);
+    }
+
     // --- DTO ---
 
     public function test_generates_dto_file(): void
@@ -287,6 +301,28 @@ class CrudGeneratorTest extends TestCase
         $this->assertStringContainsString("'name'", $content);
         $this->assertStringContainsString("'email'", $content);
         $this->assertStringContainsString('fake()', $content);
+    }
+
+    // --- Seeder ---
+
+    public function test_generates_seeder_file(): void
+    {
+        $this->assertTrue($this->fileWriter->has('seeders/UserSeeder.php'));
+    }
+
+    public function test_seeder_extends_seeder_class(): void
+    {
+        $content = $this->fileWriter->get('seeders/UserSeeder.php');
+
+        $this->assertStringContainsString('class UserSeeder extends Seeder', $content);
+        $this->assertStringContainsString('public function run(): void', $content);
+    }
+
+    public function test_seeder_uses_factory_with_configured_count(): void
+    {
+        $content = $this->fileWriter->get('seeders/UserSeeder.php');
+
+        $this->assertStringContainsString('User::factory()->count(5)->create()', $content);
     }
 
     // --- BackedEnum ---

@@ -9,6 +9,7 @@ use Vendor\LaravelAttributeCodeGenerators\Attributes\Crud;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Repository;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Resource;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Route;
+use Vendor\LaravelAttributeCodeGenerators\Attributes\Seeder;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Service;
 use Vendor\LaravelAttributeCodeGenerators\Generators\AttributeReader;
 
@@ -127,6 +128,14 @@ class AttributeReaderTest extends TestCase
         $this->assertTrue($data['factory']);
     }
 
+    public function test_detects_seeder_attribute_with_count(): void
+    {
+        $data = $this->reader->read(User::class);
+
+        $this->assertInstanceOf(Seeder::class, $data['seeder']);
+        $this->assertSame(5, $data['seeder']->count);
+    }
+
     public function test_detects_generate_test_attribute(): void
     {
         $data = $this->reader->read(User::class);
@@ -149,6 +158,7 @@ class AttributeReaderTest extends TestCase
         $this->assertFalse($data['observer']);
         $this->assertFalse($data['action']);
         $this->assertFalse($data['factory']);
+        $this->assertNull($data['seeder']);
         $this->assertFalse($data['generateTest']);
         $this->assertSame([], $data['backedEnums']);
     }

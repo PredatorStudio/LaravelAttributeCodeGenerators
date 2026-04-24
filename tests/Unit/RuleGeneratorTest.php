@@ -102,4 +102,31 @@ class RuleGeneratorTest extends TestCase
 
         $this->assertContains('exists:users,id', $rules['user_id']);
     }
+
+    public function test_partial_update_prepends_sometimes_to_all_rules(): void
+    {
+        $columns = [
+            ['name' => 'title', 'type' => 'string',  'nullable' => false, 'unique' => false, 'foreign' => false],
+            ['name' => 'bio',   'type' => 'text',     'nullable' => true,  'unique' => false, 'foreign' => false],
+        ];
+
+        $rules = $this->generator->generate($columns, 'posts', [], true);
+
+        $this->assertSame('sometimes', $rules['title'][0]);
+        $this->assertContains('required', $rules['title']);
+        $this->assertSame('sometimes', $rules['bio'][0]);
+        $this->assertContains('nullable', $rules['bio']);
+    }
+
+    public function test_store_request_does_not_have_sometimes(): void
+    {
+        $columns = [
+            ['name' => 'title', 'type' => 'string', 'nullable' => false, 'unique' => false, 'foreign' => false],
+        ];
+
+        $rules = $this->generator->generate($columns, 'posts');
+
+        $this->assertNotContains('sometimes', $rules['title']);
+        $this->assertContains('required', $rules['title']);
+    }
 }

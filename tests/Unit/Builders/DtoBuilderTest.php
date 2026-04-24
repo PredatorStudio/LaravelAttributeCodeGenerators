@@ -3,6 +3,7 @@
 namespace Tests\Unit\Builders;
 
 use PHPUnit\Framework\TestCase;
+use Tests\Fixtures\Models\Post;
 use Tests\Fixtures\Models\User;
 use Vendor\LaravelAttributeCodeGenerators\Generators\Builders\DtoBuilder;
 
@@ -68,5 +69,14 @@ class DtoBuilderTest extends TestCase
         $this->assertStringNotContainsString('updated_at', $output);
         // id is handled separately as the first constructor arg
         $this->assertSame(1, substr_count($output, '$id'));
+    }
+
+    public function test_skips_hidden_fields(): void
+    {
+        $output = $this->builder->build(Post::class);
+
+        $this->assertStringContainsString('$title', $output);
+        $this->assertStringContainsString('$body', $output);
+        $this->assertStringNotContainsString('$secret_hash', $output);
     }
 }

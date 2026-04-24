@@ -15,6 +15,7 @@ use Vendor\LaravelAttributeCodeGenerators\Attributes\Policy;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Repository;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Resource;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Route;
+use Vendor\LaravelAttributeCodeGenerators\Attributes\Seeder;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Service;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\SoftDeletes;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\ValidateFromMigration;
@@ -42,6 +43,7 @@ class AttributeReader
             'observer'            => $this->hasAttribute($reflection, Observer::class),
             'action'              => $this->hasAttribute($reflection, Action::class),
             'factory'             => $this->hasAttribute($reflection, Factory::class),
+            'seeder'              => $this->getAttribute($reflection, Seeder::class),
             'generateTest'        => $this->hasAttribute($reflection, GenerateTest::class),
         ];
     }

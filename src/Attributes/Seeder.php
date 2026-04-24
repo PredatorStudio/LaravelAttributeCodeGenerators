@@ -1,13 +1,13 @@
 <?php
+
 namespace Vendor\LaravelAttributeCodeGenerators\Attributes;
 
 use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS)]
-class Route
+class Seeder
 {
     public function __construct(
-        public string $path,
-        public array  $middleware = []
+        public int $count = 10
     ) {}
 }

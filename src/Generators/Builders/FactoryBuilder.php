@@ -55,14 +55,15 @@ PHP;
         }
 
         return match ($field['type']) {
-            'string'                              => 'fake()->word()',
-            'text'                                => 'fake()->paragraph()',
-            'integer', 'bigInteger', 'unsignedBigInteger' => 'fake()->randomNumber()',
-            'boolean'                             => 'fake()->boolean()',
-            'date'                                => 'fake()->date()',
-            'dateTime', 'timestamp'               => 'fake()->dateTime()',
-            'decimal', 'float', 'double'          => 'fake()->randomFloat(2)',
-            default                               => 'fake()->word()',
+            'string'                                       => 'fake()->word()',
+            'text'                                         => 'fake()->paragraph()',
+            'integer', 'bigInteger', 'unsignedBigInteger'  => 'fake()->randomNumber()',
+            'foreignId'                                    => 'fake()->randomNumber()',
+            'boolean'                                      => 'fake()->boolean()',
+            'date'                                         => 'fake()->date()',
+            'dateTime', 'timestamp'                        => 'fake()->dateTime()',
+            'decimal', 'float', 'double'                   => 'fake()->randomFloat(2)',
+            default                                        => 'fake()->word()',
         };
     }
 }

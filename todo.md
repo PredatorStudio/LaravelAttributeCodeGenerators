@@ -26,18 +26,34 @@
 - Następne wywołanie polecenia nie powinno już tego generować, powinno przeskanować aplikacje, zebrać dane, sprawdzić co było już wykonane, zrobić diff i wygenerować kod
 - Plik powinien być widoczny żeby w razie zmiany w modelu np. kolumn lub argumentów atrybutu można było usunąć je z zapisanego pliku i wygenerować ponownie
 
-## [ ] 5. Sprawdzanie migracji
+## [X] 5. Sprawdzanie migracji
 - Jeśli mamy wygenerowaną migrację i dodamy modelu nową kolumnę system powinien mieć zapisane jakie kolumny są wygenerowane i przy ponownym generowaniu powinien wygenerować
 - migrację wyłącznie na nowe kolumny
 
-## [ ] 6. Kolumna hidden
+## [X] 6. Kolumna hidden
 - jeśli ustawimy hidden na deklaracji kolumny to nie powinna być ona dodawana do request/response, mozna to lepiej nazwać ale ma działać tak jak napisane
 
-## [ ] 7. skill do AI który opisze wszystkie atrybuty
+## [X] 7. skill do AI który opisze wszystkie atrybuty
+- Plik skill w `resources/ai/describe-attributes.md` — źródło prawdy wewnątrz paczki
+- Komenda `php artisan crud:install --ai` kopiuje skill do `.claude/commands/describe-attributes.md` projektu użytkownika
+- Po restarcie Claude Code dostępny jako `/describe-attributes` (wszystkie atrybuty) lub `/describe-attributes Seeder` (konkretny atrybut)
+- Skill generuje: opis generowanych artefaktów, tabelę parametrów, przykłady użycia, mapę interakcji między atrybutami oraz referencję `fields()`
 
-## [ ] 8. Generowanie Seederów i factory
+## [X] 8. Generowanie Seederów i factory
 
-## [ ] 9. MD - opis biblioteki, atrybutów itp.
+## [X] 9. MD - opis biblioteki, atrybutów itp.
+
+## [X] 11. `hidden` nie działa w DTO — DtoBuilder nie sprawdza flagi `hidden: true`, niespójność z punktem 6
+
+## [X] 12. `UpdateRequest` powinien używać `sometimes` — partial update (PATCH semantics), teraz Store i Update mają te same reguły
+
+## [X] 13. `#[SoftDeletes]` nie dodaje `$table->softDeletes()` w migracji — kolumna `deleted_at` w ogóle nie pojawia się w migracji
+
+## [X] 14. `foreignId` w Factory generuje `fake()->word()` — zły typ, powinno być `fake()->randomNumber()`
+
+## [X] 15. Controller ignoruje metody z `#[Crud(methods: [...])]` — route filtruje przez `->only()` ale kontroler zawsze ma wszystkie 5 metod
+
+## [X] 16. `#[Route(middleware: [...])]` — brak wsparcia dla middleware w generowanych trasach
 
 ## [ ] 10. Landing page biblioteki + opis wszystkich attributes
 

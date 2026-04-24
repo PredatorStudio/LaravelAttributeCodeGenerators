@@ -6,9 +6,9 @@ class RouteCollector
 {
     protected array $routes = [];
 
-    public function add(string $route, string $controller, array $methods): void
+    public function add(string $route, string $controller, array $methods, array $middleware = []): void
     {
-        $this->routes[] = compact('route', 'controller', 'methods');
+        $this->routes[] = compact('route', 'controller', 'methods', 'middleware');
     }
 
     public function flush(): void
@@ -24,12 +24,19 @@ class RouteCollector
         $output = "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n";
 
         foreach ($this->routes as $r) {
-            if (empty($r['methods'])) {
-                $output .= "Route::apiResource('{$r['route']}', {$r['controller']}::class);\n\n";
-            } else {
+            $line = "Route::apiResource('{$r['route']}', {$r['controller']}::class)";
+
+            if (!empty($r['methods'])) {
                 $methods = "['" . implode("','", $r['methods']) . "']";
-                $output .= "Route::apiResource('{$r['route']}', {$r['controller']}::class)\n    ->only({$methods});\n\n";
+                $line   .= "\n    ->only({$methods})";
             }
+
+            if (!empty($r['middleware'])) {
+                $mw   = "['" . implode("','", $r['middleware']) . "']";
+                $line .= "\n    ->middleware({$mw})";
+            }
+
+            $output .= $line . ";\n\n";
         }
 
         return $output;

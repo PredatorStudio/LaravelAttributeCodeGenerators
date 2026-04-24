@@ -59,4 +59,33 @@ class ControllerMethodBuilderTest extends TestCase
 
         $this->assertStringContainsString('BlogPost $blogPost', $output);
     }
+
+    public function test_build_with_methods_filter_includes_only_requested_methods(): void
+    {
+        $output = $this->builder->build('Post', ['index', 'show']);
+
+        $this->assertStringContainsString('public function index()', $output);
+        $this->assertStringContainsString('public function show(', $output);
+        $this->assertStringNotContainsString('public function store(', $output);
+        $this->assertStringNotContainsString('public function update(', $output);
+        $this->assertStringNotContainsString('public function destroy(', $output);
+    }
+
+    public function test_build_with_empty_methods_generates_all(): void
+    {
+        $output = $this->builder->build('Post', []);
+
+        foreach (['index', 'show', 'store', 'update', 'destroy'] as $method) {
+            $this->assertStringContainsString("public function {$method}(", $output);
+        }
+    }
+
+    public function test_build_with_single_method(): void
+    {
+        $output = $this->builder->build('Post', ['store']);
+
+        $this->assertStringContainsString('public function store(', $output);
+        $this->assertStringNotContainsString('public function index(', $output);
+        $this->assertStringNotContainsString('public function show(', $output);
+    }
 }

@@ -6,16 +6,22 @@ use Illuminate\Support\Str;
 
 class RuleGenerator
 {
-    public function generate(array $columns, string $table): array
+    public function generate(array $columns, string $table, array $hiddenFields = [], bool $partialUpdate = false): array
     {
         $rules = [];
 
         foreach ($columns as $col) {
-            if ($this->isIgnored($col['name'])) {
+            if ($this->isIgnored($col['name'], $hiddenFields)) {
                 continue;
             }
 
-            $rules[$col['name']] = $this->rulesFor($col, $table);
+            $colRules = $this->rulesFor($col, $table);
+
+            if ($partialUpdate) {
+                array_unshift($colRules, 'sometimes');
+            }
+
+            $rules[$col['name']] = $colRules;
         }
 
         return $rules;
@@ -23,19 +29,14 @@ class RuleGenerator
 
     private function rulesFor(array $col, string $table): array
     {
-        $rules = [];
-
-        if ($col['nullable']) {
-            $rules[] = 'nullable';
-        } else {
-            $rules[] = 'required';
-        }
+        $rules   = [];
+        $rules[] = $col['nullable'] ? 'nullable' : 'required';
 
         match ($col['type']) {
             'string', 'text' => $rules[] = 'string',
-            'integer' => $rules[] = 'integer',
-            'boolean' => $rules[] = 'boolean',
-            default => null,
+            'integer'        => $rules[] = 'integer',
+            'boolean'        => $rules[] = 'boolean',
+            default          => null,
         };
 
         if (str_contains($col['name'], 'email')) {
@@ -49,9 +50,10 @@ class RuleGenerator
         return $rules;
     }
 
-    private function isIgnored(string $name): bool
+    private function isIgnored(string $name, array $hiddenFields): bool
     {
-        return in_array($name, ['id', 'created_at', 'updated_at', 'deleted_at']);
+        return FieldFilter::isSystemColumn($name)
+            || in_array($name, $hiddenFields, true);
     }
 
     private function guessTable(string $column): string

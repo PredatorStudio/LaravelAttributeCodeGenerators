@@ -13,6 +13,7 @@ use Vendor\LaravelAttributeCodeGenerators\Attributes\Policy;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Repository;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Resource;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Route;
+use Vendor\LaravelAttributeCodeGenerators\Attributes\Seeder;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Service;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\SoftDeletes;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\ValidateFromMigration;
@@ -30,6 +31,7 @@ use Vendor\LaravelAttributeCodeGenerators\Attributes\ValidateFromMigration;
 #[Observer]
 #[Action]
 #[Factory]
+#[Seeder(count: 5)]
 #[GenerateTest]
 class User
 {

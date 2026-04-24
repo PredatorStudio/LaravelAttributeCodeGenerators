@@ -6,8 +6,6 @@ class ActionBuilder
 {
     public function build(string $model): string
     {
-        $var = lcfirst($model);
-
         return <<<PHP
 <?php
 

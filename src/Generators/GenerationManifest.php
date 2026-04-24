@@ -77,6 +77,25 @@ class GenerationManifest
         file_put_contents($this->path($model), $header . implode("\n", $artifacts) . "\n");
     }
 
+    public function saveMigrationColumns(string $model, array $columnNames): void
+    {
+        $existing = $this->load($model);
+        $filtered = array_values(array_filter($existing, fn($line) => !str_starts_with($line, 'migration_columns:')));
+        $filtered[] = 'migration_columns:' . implode(',', $columnNames);
+        $this->write($model, $filtered);
+    }
+
+    public function loadMigrationColumns(string $model): array
+    {
+        foreach ($this->load($model) as $line) {
+            if (str_starts_with($line, 'migration_columns:')) {
+                $cols = substr($line, strlen('migration_columns:'));
+                return $cols === '' ? [] : explode(',', $cols);
+            }
+        }
+        return [];
+    }
+
     protected function dir(): string
     {
         return base_path('.LaravelAttributeCodeGenerator');

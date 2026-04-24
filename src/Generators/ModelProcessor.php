@@ -53,6 +53,7 @@ class ModelProcessor
             $planned[] = "Delete{$model}Action";
         }
         if ($data['factory'])               $planned[] = "{$model}Factory";
+        if ($data['seeder'])                $planned[] = "{$model}Seeder";
         foreach ($data['backedEnums'] as $enumAttr) {
             $planned[] = $model . ucfirst($enumAttr->field);
         }
@@ -86,7 +87,7 @@ class ModelProcessor
             $generated[] = "{$model}Controller";
         }
 
-        if (!$skip("{$model}Resource") && $this->generateResource($model, $data)) {
+        if (!$skip("{$model}Resource") && $this->generateResource($model, $modelClass, $data)) {
             $this->logger->line("  → {$model}Resource.php");
             $generated[] = "{$model}Resource";
         }
@@ -120,7 +121,7 @@ class ModelProcessor
 
         if ($data['validateFromMigration']) {
             if (!$skip("{$model}StoreRequest") || !$skip("{$model}UpdateRequest")) {
-                [$storeWritten, $updateWritten] = $this->generateRequests($model, $data, $skip);
+                [$storeWritten, $updateWritten] = $this->generateRequests($model, $modelClass, $data, $skip);
                 if ($storeWritten) {
                     $this->logger->line("  → {$model}StoreRequest.php");
                     $generated[] = "{$model}StoreRequest";
@@ -137,10 +138,8 @@ class ModelProcessor
             $generated[] = "{$model}DTO";
         }
 
-        if ($data['generateMigration'] && !$skip('migration')) {
-            $this->migrationGenerator->generate($modelClass);
-            $this->logger->line("  → migration file");
-            $generated[] = 'migration';
+        if ($data['generateMigration']) {
+            array_push($generated, ...$this->processMigration($model, $modelClass, $data, $skip, $manifest));
         }
 
         if ($data['observer'] && !$skip("{$model}Observer") && $this->generateObserver($model)) {
@@ -169,6 +168,11 @@ class ModelProcessor
             $generated[] = "{$model}Factory";
         }
 
+        if ($data['seeder'] && !$skip("{$model}Seeder") && $this->generateSeeder($model, $data)) {
+            $this->logger->line("  → {$model}Seeder.php");
+            $generated[] = "{$model}Seeder";
+        }
+
         foreach ($data['backedEnums'] as $enumAttr) {
             $enumName = $model . ucfirst($enumAttr->field);
             if (!$skip($enumName) && $this->generateEnum($enumName, $enumAttr)) {
@@ -188,7 +192,7 @@ class ModelProcessor
             $generated[] = $modelSyncKey;
         }
 
-        $routes->add($route, $model . 'Controller', $data['crud']->methods ?? []);
+        $routes->add($route, $model . 'Controller', $data['crud']->methods ?? [], $data['route']?->middleware ?? []);
 
         return $generated;
     }
@@ -205,19 +209,19 @@ class ModelProcessor
                     'model'        => $model,
                     'service_fqn'  => $useInterface ? "App\\Contracts\\{$model}ServiceInterface" : "App\\Services\\{$model}Service",
                     'service_type' => $useInterface ? "{$model}ServiceInterface" : "{$model}Service",
-                    'methods'      => (new ControllerMethodBuilder())->build($model),
+                    'methods'      => (new ControllerMethodBuilder())->build($model, $data['crud']->methods ?? []),
                 ]
             )
         );
     }
 
-    private function generateResource(string $model, array $data): bool
+    private function generateResource(string $model, string $modelClass, array $data): bool
     {
         return $this->writer->write(
             app_path("Http/Resources/{$model}Resource.php"),
             $this->renderer->render(
                 $this->stubPath('resource.stub'),
-                ['model' => $model, 'body' => (new ResourceBuilder())->build($data['resource'])]
+                ['model' => $model, 'body' => (new ResourceBuilder())->build($data['resource'], $modelClass)]
             )
         );
     }
@@ -325,14 +329,18 @@ PHP;
         );
     }
 
-    private function generateRequests(string $model, array $data, callable $skip): array
+    private function generateRequests(string $model, string $modelClass, array $data, callable $skip): array
     {
-        $columns = $this->migrationParser->parse(strtolower($model));
-        $rules = $this->ruleGenerator->generate($columns, strtolower($model));
+        $columns      = $this->migrationParser->parse(strtolower($model));
+        $hiddenFields = $this->getHiddenFields($modelClass);
+        $table        = strtolower($model);
+
+        $storeRules  = $this->ruleGenerator->generate($columns, $table, $hiddenFields);
+        $updateRules = $this->ruleGenerator->generate($columns, $table, $hiddenFields, true);
 
         return [
-            !$skip("{$model}StoreRequest") ? $this->writeRequest($model, 'store', $rules) : false,
-            !$skip("{$model}UpdateRequest") ? $this->writeRequest($model, 'update', $rules) : false,
+            !$skip("{$model}StoreRequest")  ? $this->writeRequest($model, 'store',  $storeRules)  : false,
+            !$skip("{$model}UpdateRequest") ? $this->writeRequest($model, 'update', $updateRules) : false,
         ];
     }
 
@@ -397,6 +405,20 @@ PHP;
         );
     }
 
+    private function generateSeeder(string $model, array $data): bool
+    {
+        return $this->writer->write(
+            database_path("seeders/{$model}Seeder.php"),
+            $this->renderer->render(
+                $this->stubPath('seeder.stub'),
+                [
+                    'model' => $model,
+                    'count' => (string) $data['seeder']->count,
+                ]
+            )
+        );
+    }
+
     private function generateEnum(string $enumName, BackedEnum $attr): bool
     {
         return $this->writer->write(
@@ -419,6 +441,65 @@ PHP;
     private function resolveRoute(array $data, string $model): string
     {
         return $data['route']?->path ?? strtolower($model) . 's';
+    }
+
+    private function getHiddenFields(string $modelClass): array
+    {
+        if (!method_exists($modelClass, 'fields')) {
+            return [];
+        }
+        return array_values(array_column(
+            array_filter((new $modelClass)->fields(), fn($f) => !empty($f['hidden'])),
+            'name'
+        ));
+    }
+
+    private function processMigration(string $model, string $modelClass, array $data, callable $skip, GenerationManifest $manifest): array
+    {
+        $fields             = method_exists($modelClass, 'fields') ? (new $modelClass)->fields() : [];
+        $currentColumnNames = $this->extractColumnNames($fields);
+
+        if (!$skip('migration')) {
+            $this->migrationGenerator->generate($modelClass, (bool) $data['softDeletes']);
+            $manifest->saveMigrationColumns($model, $currentColumnNames);
+            $this->logger->line("  → migration file");
+            return ['migration'];
+        }
+
+        $savedColumnNames = $manifest->loadMigrationColumns($model);
+        $newColumnNames   = array_values(array_diff($currentColumnNames, $savedColumnNames));
+
+        if (empty($newColumnNames)) {
+            return [];
+        }
+
+        $newFields = array_values(array_filter($fields, function (array $field) use ($newColumnNames): bool {
+            $name = $field['name'] ?? ($field['type'] === 'id' ? 'id' : null);
+            return $name !== null && in_array($name, $newColumnNames, true);
+        }));
+
+        $this->migrationGenerator->generateAlter($modelClass, $newFields);
+        $manifest->saveMigrationColumns($model, array_merge($savedColumnNames, $newColumnNames));
+        $this->logger->line("  → migration file (alter: " . implode(', ', $newColumnNames) . ")");
+
+        return ['migration_alter'];
+    }
+
+    private function extractColumnNames(array $fields): array
+    {
+        $names = [];
+        foreach ($fields as $field) {
+            if (isset($field['name'])) {
+                $names[] = $field['name'];
+            } elseif (($field['type'] ?? '') === 'id') {
+                $names[] = 'id';
+            } elseif (($field['type'] ?? '') === 'primary' && isset($field['columns'])) {
+                foreach ($field['columns'] as $col) {
+                    $names[] = $col;
+                }
+            }
+        }
+        return array_values(array_unique($names));
     }
 
     private function stubPath(string $name): string
