@@ -4,6 +4,7 @@ namespace Vendor\LaravelAttributeCodeGenerators\Generators;
 
 use ReflectionClass;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Action;
+use Vendor\LaravelAttributeCodeGenerators\Attributes\ApiDocs;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\BackedEnum;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Crud;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\DTO;
@@ -45,6 +46,7 @@ class AttributeReader
             'factory'             => $this->hasAttribute($reflection, Factory::class),
             'seeder'              => $this->getAttribute($reflection, Seeder::class),
             'generateTest'        => $this->hasAttribute($reflection, GenerateTest::class),
+            'apiDocs'             => $this->getAttribute($reflection, ApiDocs::class),
         ];
     }
 

@@ -11,6 +11,7 @@ class CrudGenerator
         private BindingsCollector $bindings,
         private CrudLogger $logger,
         private GenerationManifest $manifest,
+        private ApiDocsCollector $apiDocs,
     ) {}
 
     public function generateAll(bool $dryRun = false): void
@@ -122,6 +123,12 @@ class CrudGenerator
 
         $this->routes->flush();
         $this->logger->line('Writing routes → routes/generated.php');
+
+        if (!$this->apiDocs->isEmpty()) {
+            $this->apiDocs->flush();
+            $this->logger->line('Writing API docs → ' . config('crud-generator.api_docs_main_file', 'docs/api/openapi.yaml'));
+        }
+
         $this->logger->line('');
     }
 

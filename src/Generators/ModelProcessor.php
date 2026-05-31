@@ -22,6 +22,8 @@ class ModelProcessor
         private EnumGenerator $enumGenerator,
         private CrudLogger $logger,
         private ModelModifier $modifier,
+        private ApiDocsGenerator $apiDocsGenerator,
+        private ApiDocsCollector $apiDocsCollector,
     ) {}
 
     public function plan(string $modelClass): array
@@ -58,6 +60,7 @@ class ModelProcessor
             $planned[] = $model . ucfirst($enumAttr->field);
         }
         if ($data['generateTest'])          $planned[] = "{$model}Test";
+        if ($data['apiDocs'])               $planned[] = "{$model}.yaml";
 
         if (method_exists($modelClass, 'fields') || $data['softDeletes'] || !empty($data['backedEnums'])) {
             $planned[] = "{$model}.php (model sync)";
@@ -190,6 +193,12 @@ class ModelProcessor
         if (!$skip($modelSyncKey) && $this->modifier->modify($modelClass, $data)) {
             $this->logger->line("  → {$model}.php (model synced)");
             $generated[] = $modelSyncKey;
+        }
+
+        if ($data['apiDocs'] && $this->apiDocsGenerator->generate($model, $data, $route)) {
+            $this->logger->line("  → {$model}.yaml");
+            $generated[] = "{$model}.yaml";
+            $this->apiDocsCollector->add($model, $route, $data['crud']->methods ?: [], $data['apiDocs']->description);
         }
 
         $routes->add($route, $model . 'Controller', $data['crud']->methods ?? [], $data['route']?->middleware ?? []);
