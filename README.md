@@ -17,6 +17,14 @@ composer require predatorstudio/laravel-attribute-code-generators
 
 The service provider is auto-discovered via Laravel's package auto-discovery.
 
+Publish the config file to customise paths:
+
+```bash
+php artisan vendor:publish --tag=crud-generator-config
+```
+
+This creates `config/crud-generator.php` in your application.
+
 ## Claude Code integration (optional)
 
 Install a `/describe-attributes` slash command into your project's Claude Code environment:
@@ -39,6 +47,33 @@ The skill covers:
 - Non-obvious behaviours (idempotency, PATCH semantics, `hidden` flag, ALTER migrations, …)
 - `fields()` key reference
 - Attribute interaction map (which attributes depend on or complement each other)
+
+## Configuration
+
+After publishing the config you can adjust these keys in `config/crud-generator.php`:
+
+| Key | Default | Description |
+|---|---|---|
+| `scan_path` | `app/Models` | Directory scanned for models (relative to project root). All subdirectories are included recursively. The namespace is derived automatically from the path. |
+| `api_docs_path` | `docs/api` | Base directory for API documentation files |
+| `api_docs_models_path` | `docs/api/models` | Directory where per-model YAML files are saved |
+| `api_docs_main_file` | `docs/api/openapi.yaml` | Main OpenAPI file regenerated on every `crud:sync` |
+
+### Scanning subdirectories
+
+Models can be placed in any subdirectory under `scan_path`. The namespace is inferred from the folder structure:
+
+```
+app/Models/Blog/Post.php     → App\Models\Blog\Post
+app/Models/Shop/Product.php  → App\Models\Shop\Product
+```
+
+To scan a different root, change `scan_path` in the config:
+
+```php
+'scan_path' => 'app/Domain/Models',
+// resolves to namespace App\Domain\Models
+```
 
 ## Usage
 

@@ -2,6 +2,12 @@
 
 return [
     /*
+     * Directory to scan for models with CRUD attributes (relative to project root).
+     * All subdirectories are scanned recursively. Namespace is derived automatically.
+     */
+    'scan_path' => 'app/Models',
+
+    /*
      * Base directory for all API documentation files (relative to project root).
      */
     'api_docs_path' => 'docs/api',

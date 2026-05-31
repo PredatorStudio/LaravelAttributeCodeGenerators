@@ -8,12 +8,30 @@ class ModelScanner
 {
     public function scan(): array
     {
-        $files = File::allFiles(app_path('Models'));
+        $scanPath = config('crud-generator.scan_path', 'app/Models');
+        $absolutePath = base_path($scanPath);
+
+        if (! is_dir($absolutePath)) {
+            return [];
+        }
+
+        $baseNamespace = $this->pathToNamespace($scanPath);
+        $files = File::allFiles($absolutePath);
 
         $models = [];
 
         foreach ($files as $file) {
-            $class = 'App\\Models\\' . $file->getFilenameWithoutExtension();
+            if ($file->getExtension() !== 'php') {
+                continue;
+            }
+
+            $relative = str_replace(
+                [DIRECTORY_SEPARATOR, '/', '.php'],
+                ['\\', '\\', ''],
+                $file->getRelativePathname()
+            );
+
+            $class = $baseNamespace . '\\' . $relative;
 
             if (class_exists($class)) {
                 $models[] = $class;
@@ -21,5 +39,10 @@ class ModelScanner
         }
 
         return $models;
+    }
+
+    private function pathToNamespace(string $path): string
+    {
+        return implode('\\', array_map('ucfirst', explode('/', $path)));
     }
 }
