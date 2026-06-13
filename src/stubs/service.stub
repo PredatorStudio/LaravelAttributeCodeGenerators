@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace {{namespace}};
 
-use App\Models\{{model}};
+use App\Models{{sub_namespace}}\{{model}};
 use {{repository_fqn}};{{service_interface_use}}
 
 class {{model}}Service{{implements}}

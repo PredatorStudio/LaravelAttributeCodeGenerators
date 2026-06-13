@@ -8,10 +8,12 @@ class EnumGenerator
 {
     public function generate(string $enumName, BackedEnum $attr): string
     {
-        $cases = '';
+        $className = $attr->filename ?? $enumName;
+        $cases     = '';
+
         foreach ($attr->values as $value) {
             $caseName = ucfirst($value);
-            $cases .= "    case {$caseName} = '{$value}';\n";
+            $cases   .= "    case {$caseName} = '{$value}';\n";
         }
 
         return <<<PHP
@@ -19,7 +21,7 @@ class EnumGenerator
 
 namespace App\Enums;
 
-enum {$enumName}: {$attr->type}
+enum {$className}: {$attr->type}
 {
 {$cases}}
 PHP;

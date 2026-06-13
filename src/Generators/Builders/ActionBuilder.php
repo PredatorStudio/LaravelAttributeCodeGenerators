@@ -4,14 +4,14 @@ namespace Vendor\LaravelAttributeCodeGenerators\Generators\Builders;
 
 class ActionBuilder
 {
-    public function build(string $model): string
+    public function build(string $model, string $actionsNs = 'App\\Actions', string $modelsNs = 'App\\Models'): string
     {
         return <<<PHP
 <?php
 
-namespace App\Actions;
+namespace {$actionsNs};
 
-use App\Models\\{$model};
+use {$modelsNs}\\{$model};
 
 class Create{$model}Action
 {
@@ -23,16 +23,16 @@ class Create{$model}Action
 PHP;
     }
 
-    public function buildUpdate(string $model): string
+    public function buildUpdate(string $model, string $actionsNs = 'App\\Actions', string $modelsNs = 'App\\Models'): string
     {
         $var = lcfirst($model);
 
         return <<<PHP
 <?php
 
-namespace App\Actions;
+namespace {$actionsNs};
 
-use App\Models\\{$model};
+use {$modelsNs}\\{$model};
 
 class Update{$model}Action
 {
@@ -46,16 +46,16 @@ class Update{$model}Action
 PHP;
     }
 
-    public function buildDelete(string $model): string
+    public function buildDelete(string $model, string $actionsNs = 'App\\Actions', string $modelsNs = 'App\\Models'): string
     {
         $var = lcfirst($model);
 
         return <<<PHP
 <?php
 
-namespace App\Actions;
+namespace {$actionsNs};
 
-use App\Models\\{$model};
+use {$modelsNs}\\{$model};
 
 class Delete{$model}Action
 {

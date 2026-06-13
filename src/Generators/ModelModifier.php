@@ -201,8 +201,8 @@ class ModelModifier
         $items = [];
 
         foreach ($data['backedEnums'] as $enumAttr) {
-            $enumName = $model . ucfirst($enumAttr->field);
-            $items[]  = new Node\Expr\ArrayItem(
+            $enumName  = $enumAttr->filename ?? ($model . ucfirst($enumAttr->field));
+            $items[]   = new Node\Expr\ArrayItem(
                 new Node\Expr\ClassConstFetch(
                     new Node\Name($enumName),
                     new Node\Identifier('class')
@@ -280,11 +280,24 @@ class ModelModifier
                 continue;
             }
 
-            $relatedModel = Str::studly(preg_replace('/_id$/', '', $field['name']));
+            $relationDef  = $field['relation'] ?? [];
+            $relatedModel = $relationDef['model'] ?? Str::studly(preg_replace('/_id$/', '', $field['name']));
+            $localKey     = $relationDef['local']   ?? null;
+            $foreignKey   = $relationDef['foreign'] ?? null;
             $methodName   = lcfirst($relatedModel);
 
             if ($this->hasMethod($classNode, $methodName)) {
                 continue;
+            }
+
+            $args = [new Node\Arg(new Node\Expr\ClassConstFetch(
+                new Node\Name($relatedModel),
+                new Node\Identifier('class')
+            ))];
+
+            if ($localKey !== null || $foreignKey !== null) {
+                $args[] = new Node\Arg(new Node\Scalar\String_($localKey ?? $field['name']));
+                $args[] = new Node\Arg(new Node\Scalar\String_($foreignKey ?? 'id'));
             }
 
             $method = $this->factory->method($methodName)
@@ -294,10 +307,7 @@ class ModelModifier
                     new Node\Expr\MethodCall(
                         new Node\Expr\Variable('this'),
                         new Node\Identifier('belongsTo'),
-                        [new Node\Arg(new Node\Expr\ClassConstFetch(
-                            new Node\Name($relatedModel),
-                            new Node\Identifier('class')
-                        ))]
+                        $args
                     )
                 ))
                 ->getNode();

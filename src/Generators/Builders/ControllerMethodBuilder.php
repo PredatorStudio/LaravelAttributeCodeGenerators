@@ -21,9 +21,11 @@ class ControllerMethodBuilder
 
     private function renderMethod(string $method, string $model, string $var): string
     {
+        $doc = $this->phpDoc($method, $model, $var);
+
         return match ($method) {
             'index'   => <<<PHP
-    public function index()
+{$doc}    public function index(): AnonymousResourceCollection
     {
         return {$model}Resource::collection(
             \$this->service->index()
@@ -31,7 +33,7 @@ class ControllerMethodBuilder
     }
 PHP,
             'show'    => <<<PHP
-    public function show({$model} \${$var})
+{$doc}    public function show({$model} \${$var}): {$model}Resource
     {
         return new {$model}Resource(
             \$this->service->show(\${$var})
@@ -39,7 +41,7 @@ PHP,
     }
 PHP,
             'store'   => <<<PHP
-    public function store({$model}StoreRequest \$request)
+{$doc}    public function store({$model}StoreRequest \$request): {$model}Resource
     {
         return new {$model}Resource(
             \$this->service->store(\$request->validated())
@@ -47,7 +49,7 @@ PHP,
     }
 PHP,
             'update'  => <<<PHP
-    public function update({$model}UpdateRequest \$request, {$model} \${$var})
+{$doc}    public function update({$model}UpdateRequest \$request, {$model} \${$var}): {$model}Resource
     {
         return new {$model}Resource(
             \$this->service->update(\${$var}, \$request->validated())
@@ -55,7 +57,7 @@ PHP,
     }
 PHP,
             'destroy' => <<<PHP
-    public function destroy({$model} \${$var})
+{$doc}    public function destroy({$model} \${$var}): Response
     {
         \$this->service->delete(\${$var});
 
@@ -64,5 +66,32 @@ PHP,
 PHP,
             default   => '',
         };
+    }
+
+    private function phpDoc(string $method, string $model, string $var): string
+    {
+        if (!config('crud-generator.generate_php_docs', false)) {
+            return '';
+        }
+
+        $docs = match ($method) {
+            'index'   => ['return' => 'AnonymousResourceCollection'],
+            'show'    => ['params' => ["{$model} \${$var}"], 'return' => "{$model}Resource"],
+            'store'   => ['params' => ["{$model}StoreRequest \$request"], 'return' => "{$model}Resource"],
+            'update'  => ['params' => ["{$model}UpdateRequest \$request", "{$model} \${$var}"], 'return' => "{$model}Resource"],
+            'destroy' => ['params' => ["{$model} \${$var}"], 'return' => 'Response'],
+            default   => [],
+        };
+
+        $lines = ['    /**'];
+        foreach ($docs['params'] ?? [] as $param) {
+            $lines[] = "     * @param {$param}";
+        }
+        if (isset($docs['return'])) {
+            $lines[] = "     * @return {$docs['return']}";
+        }
+        $lines[] = '     */';
+
+        return implode("\n", $lines) . "\n";
     }
 }

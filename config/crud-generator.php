@@ -8,6 +8,31 @@ return [
     'scan_path' => 'app/Models',
 
     /*
+     * Output directories for each generator (relative to project root).
+     * Subdirectories mirroring the model's location are appended automatically.
+     * Example: model at app/Models/Projects/Project → controller at app/Http/Controllers/Projects/
+     */
+    'paths' => [
+        'controllers'  => 'app/Http/Controllers',
+        'resources'    => 'app/Http/Resources',
+        'requests'     => 'app/Http/Requests',
+        'services'     => 'app/Services',
+        'repositories' => 'app/Repositories',
+        'contracts'    => 'app/Contracts',
+        'policies'     => 'app/Policies',
+        'observers'    => 'app/Observers',
+        'actions'      => 'app/Actions',
+        'dto'          => 'app/DTO',
+        'enums'        => 'app/Enums',
+    ],
+
+    /*
+     * When true, every generated method will include a standard PHPDoc block
+     * with @param and @return annotations.
+     */
+    'generate_php_docs' => false,
+
+    /*
      * Base directory for all API documentation files (relative to project root).
      */
     'api_docs_path' => 'docs/api',

@@ -21,6 +21,12 @@ public static function fields(): array
                 'type' => 'foreignId',
                 'references' => 'users.id',
                 'onDelete' => 'cascade',
+                // Optional: explicit relation definition
+                // 'relation' => [
+                //     'model'   => 'User',    // related model (default: auto-derived from _id suffix)
+                //     'local'   => 'user_id', // local key on this table (default: field name)
+                //     'foreign' => 'id',      // key on the related table (default: id)
+                // ],
             ],
         ];
     }

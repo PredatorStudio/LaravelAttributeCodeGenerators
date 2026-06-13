@@ -1,13 +1,13 @@
 # Laravel Attribute Code Generators
 
-**v1.0**
+**v1.1**
 
-A Laravel package that generates a full CRUD scaffold from PHP 8.2 Attributes placed directly on Eloquent models. One command reads every model in your app, inspects its attributes, and writes controllers, services, repositories, DTOs, resources, migrations, policies, observers, factories, seeders, tests, and routes — only what you asked for, nothing more.
+A Laravel package that generates a full CRUD scaffold from PHP 8.1 Attributes placed directly on Eloquent models. One command reads every model in your app, inspects its attributes, and writes controllers, services, repositories, DTOs, resources, migrations, policies, observers, factories, seeders, tests, and routes — only what you asked for, nothing more.
 
 ## Requirements
 
-- PHP 8.2+
-- Laravel 11, 12, or 13
+- PHP 8.1+
+- Laravel 10+
 
 ## Installation
 
@@ -40,40 +40,66 @@ This copies a prompt file to `.claude/commands/describe-attributes.md` in your p
 | `/describe-attributes` | Full reference — every attribute, its parameters, generated artifacts, and interaction map |
 | `/describe-attributes Seeder` | Reference for a single attribute (case-insensitive) |
 
-The skill covers:
-- What each attribute generates
-- All constructor parameters with types, defaults, and descriptions
-- Usage examples
-- Non-obvious behaviours (idempotency, PATCH semantics, `hidden` flag, ALTER migrations, …)
-- `fields()` key reference
-- Attribute interaction map (which attributes depend on or complement each other)
-
 ## Configuration
 
 After publishing the config you can adjust these keys in `config/crud-generator.php`:
 
 | Key | Default | Description |
 |---|---|---|
-| `scan_path` | `app/Models` | Directory scanned for models (relative to project root). All subdirectories are included recursively. The namespace is derived automatically from the path. |
+| `scan_path` | `app/Models` | Directory scanned for models (relative to project root). All subdirectories are included recursively. |
+| `generate_php_docs` | `false` | When `true`, every generated method gets a PHPDoc block with `@param` and `@return` annotations. |
 | `api_docs_path` | `docs/api` | Base directory for API documentation files |
 | `api_docs_models_path` | `docs/api/models` | Directory where per-model YAML files are saved |
 | `api_docs_main_file` | `docs/api/openapi.yaml` | Main OpenAPI file regenerated on every `crud:sync` |
 
-### Scanning subdirectories
+### Output path overrides
 
-Models can be placed in any subdirectory under `scan_path`. The namespace is inferred from the folder structure:
-
-```
-app/Models/Blog/Post.php     → App\Models\Blog\Post
-app/Models/Shop/Product.php  → App\Models\Shop\Product
-```
-
-To scan a different root, change `scan_path` in the config:
+The `paths` key lets you change the target directory for each generator. All paths are relative to the project root.
 
 ```php
-'scan_path' => 'app/Domain/Models',
-// resolves to namespace App\Domain\Models
+'paths' => [
+    'controllers'  => 'app/Http/Controllers',
+    'resources'    => 'app/Http/Resources',
+    'requests'     => 'app/Http/Requests',
+    'services'     => 'app/Services',
+    'repositories' => 'app/Repositories',
+    'contracts'    => 'app/Contracts',
+    'policies'     => 'app/Policies',
+    'observers'    => 'app/Observers',
+    'actions'      => 'app/Actions',
+    'dto'          => 'app/DTO',
+    'enums'        => 'app/Enums',
+],
 ```
+
+Example — if your services live in `app/Libs/Services`:
+
+```php
+'paths' => [
+    'services' => 'app/Libs/Services',
+],
+```
+
+The generated `UserService` will be placed at `app/Libs/Services/UserService.php` with namespace `App\Libs\Services`.
+
+### Scanning subdirectories & automatic subpath mirroring
+
+Models can be placed in any subdirectory under `scan_path`. The namespace is inferred from the folder structure, and **every generated file mirrors the same subdirectory**:
+
+```
+app/Models/Projects/Project.php  →  App\Models\Projects\Project
+```
+
+Generated files:
+
+```
+app/Http/Controllers/Projects/ProjectController.php
+app/Services/Projects/ProjectService.php
+app/Repositories/Projects/ProjectRepository.php
+...
+```
+
+This ensures namespaces stay consistent across the entire generated scaffold without any manual configuration.
 
 ## Usage
 
@@ -92,16 +118,16 @@ php artisan crud:sync
 
 ### `#[Crud]`
 
-Enables CRUD generation for the model. Optionally restricts which HTTP methods are scaffolded. The generated controller and resource routes will contain only the listed methods.
+Enables CRUD generation for the model. Optionally restricts which HTTP methods are scaffolded.
 
 ```php
-#[Crud]                                                    // all methods
+#[Crud]
 #[Crud(methods: ['index', 'store', 'show', 'update', 'destroy'])]
 ```
 
 ### `#[Route]`
 
-Registers the resource route under the given path. Optionally applies middleware to the route group.
+Registers the resource route under the given path. Optionally applies middleware.
 
 ```php
 #[Route(path: 'users')]
@@ -176,17 +202,19 @@ Generates a database seeder that uses the model's factory to create records. The
 #[Seeder(count: 50)]
 ```
 
-### `#[SoftDeletes]`
+### `#[UseSoftDeletes]`
 
 Adds soft-delete support: appends `$table->softDeletes()` to the generated migration and injects the `SoftDeletes` trait into the model.
 
 ```php
-#[SoftDeletes]
+#[UseSoftDeletes]
 ```
+
+> **Note:** The attribute was renamed from `#[SoftDeletes]` to `#[UseSoftDeletes]` in v1.1 to avoid a name collision with the Eloquent `SoftDeletes` trait.
 
 ### `#[GenerateMigration]`
 
-Generates a `create_*_table` migration based on the model's `fields()` method. On subsequent runs the package compares saved column names against the current `fields()` list — if new columns are found it generates an `add_columns_to_*_table` ALTER migration instead of recreating the original.
+Generates a `create_*_table` migration based on the model's `fields()` method. On subsequent runs the package compares saved column names against the current `fields()` list — if new columns are found it generates an `add_columns_to_*_table` ALTER migration.
 
 ```php
 #[GenerateMigration]
@@ -194,7 +222,7 @@ Generates a `create_*_table` migration based on the model's `fields()` method. O
 
 ### `#[ValidateFromMigration]`
 
-Generates `StoreRequest` and `UpdateRequest` validation rules derived from the migration columns. The `UpdateRequest` automatically prepends `sometimes` to every rule, making it suitable for PATCH requests (only fields present in the payload are validated).
+Generates `StoreRequest` and `UpdateRequest` validation rules derived from the migration columns. The `UpdateRequest` automatically prepends `sometimes` to every rule, making it suitable for PATCH requests.
 
 Fields marked `hidden: true` in `fields()` are excluded from both requests.
 
@@ -209,6 +237,13 @@ Generates a backed enum for a field. Repeatable — add one per enum field.
 ```php
 #[BackedEnum(field: 'status', values: ['active', 'inactive'])]
 #[BackedEnum(field: 'role',   values: ['admin', 'editor', 'viewer'], type: 'string')]
+```
+
+Use `filename` to override the generated class name (useful when the auto-derived name conflicts with something else):
+
+```php
+#[BackedEnum(field: 'status', values: ['active', 'inactive'], filename: 'ProjectStatus')]
+// generates App\Enums\ProjectStatus instead of App\Enums\ProjectStatus (default)
 ```
 
 ### `#[Action]`
@@ -226,6 +261,8 @@ Generates a feature test for the model's CRUD endpoints.
 ```php
 #[GenerateTest]
 ```
+
+---
 
 ## The `fields()` method
 
@@ -246,6 +283,8 @@ public function fields(): array
 }
 ```
 
+### Field keys
+
 | Key | Type | Description |
 |---|---|---|
 | `name` | string | Column name |
@@ -253,7 +292,83 @@ public function fields(): array
 | `nullable` | bool | Adds `nullable()` to the migration column and `nullable` to validation rules |
 | `unique` | bool | Adds `unique()` to the migration column |
 | `default` | mixed | Adds `->default(value)` to the migration column |
-| `hidden` | bool | Excludes the field from requests, resources, and DTOs — useful for internal columns like hashed tokens or audit fields |
+| `hidden` | bool | Excludes the field from requests, resources, and DTOs |
+
+### Explicit relation definitions
+
+For `foreignId` fields you can provide an explicit `relation` key to control how the `BelongsTo` relation is generated on the model. Without it the related model is derived automatically from the `_id` suffix.
+
+```php
+['name' => 'author_id', 'type' => 'foreignId', 'relation' => [
+    'model'   => 'User',      // related model class (default: auto-derived from field name)
+    'local'   => 'author_id', // local key on this table (default: field name)
+    'foreign' => 'id',        // key on the related table (default: id)
+]]
+```
+
+When `local` or `foreign` differ from defaults the generated `belongsTo()` call includes the explicit key arguments:
+
+```php
+public function author(): BelongsTo
+{
+    return $this->belongsTo(User::class, 'author_id', 'id');
+}
+```
+
+---
+
+## Bindings provider
+
+When `interface: true` is used on `#[Service]` or `#[Repository]`, the package writes interface-to-implementation bindings to `app/Providers/GeneratedBindingsProvider.php`.
+
+The generated block is wrapped in marker comments so that **manually added bindings are preserved** across runs:
+
+```php
+public function register(): void
+{
+    // @crud-generator:start
+    $this->app->bind(\App\Contracts\UserServiceInterface::class, \App\Services\UserService::class);
+    // @crud-generator:end
+
+    // your manual bindings go here and are never touched
+    $this->app->bind(PaymentGatewayInterface::class, StripeGateway::class);
+}
+```
+
+---
+
+## Generated method signatures
+
+All generated methods include explicit return types. Enable PHPDoc blocks via config:
+
+```php
+'generate_php_docs' => true,
+```
+
+Controller:
+
+```php
+/** @return AnonymousResourceCollection */
+public function index(): AnonymousResourceCollection { ... }
+
+/** @return UserResource */
+public function show(User $user): UserResource { ... }
+
+/** @return Response */
+public function destroy(User $user): Response { ... }
+```
+
+Service:
+
+```php
+/** @return LengthAwarePaginator */
+public function index(): \Illuminate\Contracts\Pagination\LengthAwarePaginator { ... }
+
+/** @return User */
+public function store(array $data): User { ... }
+```
+
+---
 
 ## Full example
 
@@ -276,7 +391,7 @@ use Vendor\LaravelAttributeCodeGenerators\Attributes\Resource;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Route;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Seeder;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Service;
-use Vendor\LaravelAttributeCodeGenerators\Attributes\SoftDeletes;
+use Vendor\LaravelAttributeCodeGenerators\Attributes\UseSoftDeletes;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\ValidateFromMigration;
 
 #[Crud(methods: ['index', 'store', 'show', 'update', 'destroy'])]
@@ -287,7 +402,7 @@ use Vendor\LaravelAttributeCodeGenerators\Attributes\ValidateFromMigration;
 #[Policy]
 #[ValidateFromMigration]
 #[DTO]
-#[SoftDeletes]
+#[UseSoftDeletes]
 #[BackedEnum(field: 'status', values: ['active', 'inactive'])]
 #[Observer]
 #[Action]
@@ -304,6 +419,9 @@ class User extends Model
             ['name' => 'email',       'type' => 'string', 'unique' => true],
             ['name' => 'bio',         'type' => 'text',   'nullable' => true],
             ['name' => 'password',    'type' => 'string', 'hidden' => true],
+            ['name' => 'team_id',     'type' => 'foreignId', 'relation' => [
+                'model' => 'Team',
+            ]],
             ['type' => 'timestamps'],
         ];
     }
@@ -312,21 +430,18 @@ class User extends Model
 
 Running `php artisan crud:sync` on this model generates:
 
-- `UserController` with the five resource methods
+- `UserController` with the five resource methods and return types
 - `UserService` + `UserServiceInterface` (bound in the container)
 - `UserRepository` + `UserRepositoryInterface` (bound in the container)
 - `UserResource` exposing `id`, `name`, `email` (password excluded via `hidden`)
 - `UserDTO` with readonly properties (password excluded via `hidden`)
-- `UserStoreRequest` with validation rules from the migration
-- `UserUpdateRequest` with the same rules prefixed with `sometimes` for PATCH semantics
-- `UserPolicy`
-- `UserObserver`
-- `UserFactory` with faker values per column type
-- `UserSeeder` creating 20 records via the factory
+- `UserStoreRequest` + `UserUpdateRequest` with validation rules
+- `UserPolicy`, `UserObserver`, `UserFactory`, `UserSeeder` (20 records)
 - `UserStatusEnum` backed enum
 - A feature test `UserTest`
-- A migration file with `softDeletes()`
-- Resource routes registered under `/users` behind the `auth:sanctum` middleware
+- A migration with `softDeletes()`
+- The `team()` relation injected into the model
+- Routes registered under `/users` behind `auth:sanctum`
 
 On the next run, already-generated artifacts are skipped. If new columns are added to `fields()`, only an ALTER migration is generated for the new columns.
 

@@ -24,7 +24,7 @@ class RouteCollector
         $output = "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n";
 
         foreach ($this->routes as $r) {
-            $line = "Route::apiResource('{$r['route']}', {$r['controller']}::class)";
+            $line = "Route::apiResource('{$r['route']}', \\{$r['controller']}::class)";
 
             if (!empty($r['methods'])) {
                 $methods = "['" . implode("','", $r['methods']) . "']";

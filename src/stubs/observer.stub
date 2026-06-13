@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Observers;
+namespace {{namespace}};
 
-use App\Models\{{model}};
+use App\Models{{sub_namespace}}\{{model}};
 
 class {{model}}Observer
 {

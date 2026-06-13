@@ -18,7 +18,7 @@ use Vendor\LaravelAttributeCodeGenerators\Attributes\Resource;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Route;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Seeder;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\Service;
-use Vendor\LaravelAttributeCodeGenerators\Attributes\SoftDeletes;
+use Vendor\LaravelAttributeCodeGenerators\Attributes\UseSoftDeletes;
 use Vendor\LaravelAttributeCodeGenerators\Attributes\ValidateFromMigration;
 
 class AttributeReader
@@ -39,7 +39,7 @@ class AttributeReader
             'dto'                 => $this->hasAttribute($reflection, DTO::class),
             'generateMigration'   => $this->hasAttribute($reflection, GenerateMigration::class),
             'resource'            => $this->getAttribute($reflection, Resource::class),
-            'softDeletes'         => $this->hasAttribute($reflection, SoftDeletes::class),
+            'softDeletes'         => $this->hasAttribute($reflection, UseSoftDeletes::class),
             'backedEnums'         => $this->getAttributeInstances($reflection, BackedEnum::class),
             'observer'            => $this->hasAttribute($reflection, Observer::class),
             'action'              => $this->hasAttribute($reflection, Action::class),

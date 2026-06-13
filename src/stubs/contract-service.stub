@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Contracts;
+namespace {{namespace}};
 
-use App\Models\{{model}};
+use App\Models{{sub_namespace}}\{{model}};
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface {{model}}ServiceInterface
 {

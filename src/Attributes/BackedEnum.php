@@ -11,5 +11,6 @@ class BackedEnum
         public string $field,
         public array $values,
         public string $type = 'string',
+        public ?string $filename = null,
     ) {}
 }

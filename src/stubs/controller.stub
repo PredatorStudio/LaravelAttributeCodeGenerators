@@ -1,11 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace {{namespace}};
 
-use App\Http\Requests\{{model}}StoreRequest;
-use App\Http\Requests\{{model}}UpdateRequest;
-use App\Http\Resources\{{model}}Resource;
-use App\Models\{{model}};
+use App\Http\Requests{{sub_namespace}}\{{model}}StoreRequest;
+use App\Http\Requests{{sub_namespace}}\{{model}}UpdateRequest;
+use App\Http\Resources{{sub_namespace}}\{{model}}Resource;
+use App\Models{{sub_namespace}}\{{model}};
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use {{service_fqn}};
 
 class {{model}}Controller extends Controller
